@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HopOnTable — a seat at a curated table</title>
+<meta name="description" content="HopOnTable: a guaranteed seat at a small, curated dinner table in Paris — matched by cuisine, venue type, neighborhood and budget. Clickable sample app.">
+<meta name="theme-color" content="#1E1A17">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%237A1F2B'/><circle cx='32' cy='34' r='15' fill='none' stroke='%23F6F1E7' stroke-width='4'/><circle cx='32' cy='34' r='7' fill='%23B8893B'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#F6F1E7; --paper:#FFFCF6; --ink:#1E1A17; --ink2:#5B524A; --ink3:#8F857A;
+  --line:#E6DCCB; --wine:#7A1F2B; --wine2:#9C2E3C; --brass:#B8893B; --sage:#4F6B55;
+  --ok:#2F7A4D; --warn:#B26A12; --bad:#A3322B;
+  --r:18px; --shadow:0 1px 2px rgba(30,26,23,.06),0 8px 24px rgba(30,26,23,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:#EDE4D3;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.45}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,select{font:inherit;color:inherit}
+.serif{font-family:Fraunces,Georgia,serif}
+
+/* ---------- stage (desktop: pitch + phone) ---------- */
+#stage{min-height:100%;display:flex;align-items:center;justify-content:center;gap:64px;padding:32px 24px;
+  background:radial-gradient(1200px 600px at 10% 0%,#F3E9D6,transparent),radial-gradient(900px 600px at 100% 100%,#E5D3B8,transparent),#EDE4D3}
+.pitch{max-width:420px}
+.logo{display:flex;align-items:center;gap:10px;font-family:Fraunces,serif;font-weight:600;font-size:22px;letter-spacing:-.01em}
+.logo i{width:30px;height:30px;border-radius:9px;background:var(--wine);display:grid;place-items:center}
+.logo i::before{content:"";width:14px;height:14px;border-radius:50%;border:3px solid var(--cream);box-shadow:0 0 0 0 transparent;background:radial-gradient(circle,var(--brass) 0 3px,transparent 3.5px)}
+.pitch h1{font-family:Fraunces,serif;font-weight:400;font-size:46px;line-height:1.02;letter-spacing:-.02em;margin:26px 0 14px}
+.pitch h1 em{color:var(--wine)}
+.pitch p.lead{color:var(--ink2);font-size:16px;max-width:380px}
+.steps{list-style:none;margin:28px 0;display:grid;gap:14px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start;color:var(--ink2);font-size:14px}
+.steps li::before{counter-increment:s;content:counter(s);width:30px;height:30px;border-radius:50%;border:1px solid var(--ink3);display:grid;place-items:center;font-family:Fraunces,serif;color:var(--ink)}
+.steps b{color:var(--ink);display:block;font-weight:600}
+.demo-note{font-size:12.5px;color:var(--ink3);border-top:1px solid #D8CBB4;padding-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.linkbtn{text-decoration:underline;text-underline-offset:3px;color:var(--wine);font-size:12.5px}
+
+.phone{width:400px;height:min(840px,calc(100vh - 64px));min-height:640px;border-radius:44px;background:var(--ink);padding:10px;box-shadow:0 40px 80px -20px rgba(60,35,20,.45),0 0 0 1px rgba(0,0,0,.2);flex-shrink:0}
+#app{position:relative;height:100%;border-radius:35px;overflow:hidden;background:var(--cream);display:flex;flex-direction:column}
+
+@media (max-width:900px){
+  #stage{padding:0;display:block;background:var(--cream)}
+  .pitch{display:none}
+  .phone{width:100%;height:100dvh;min-height:0;border-radius:0;padding:0;box-shadow:none}
+  #app{border-radius:0}
+}
+
+/* ---------- app chrome ---------- */
+.top{padding:18px 20px 10px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.top .logo{font-size:19px}.top .logo i{width:26px;height:26px;border-radius:8px}
+.top .logo i::before{width:12px;height:12px}
+.iconbtn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--paper);border:1px solid var(--line)}
+.iconbtn svg{width:18px;height:18px}
+main{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 20px 24px;scroll-behavior:smooth}
+main::-webkit-scrollbar{width:0}
+nav.tabs{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--paper);padding:8px 6px calc(10px + env(safe-area-inset-bottom))}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:500;color:var(--ink3);text-decoration:none;position:relative;padding:4px 0}
+nav.tabs a svg{width:22px;height:22px}
+nav.tabs a.on{color:var(--wine)}
+.dot{position:absolute;top:0;right:calc(50% - 18px);min-width:16px;height:16px;padding:0 4px;border-radius:9px;background:var(--wine);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center}
+
+h2.h{font-family:Fraunces,serif;font-weight:400;font-size:28px;letter-spacing:-.015em;line-height:1.1;margin:6px 0 4px}
+h2.h em{color:var(--wine)}
+.sub{color:var(--ink2);font-size:14px}
+h3.sec{font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);margin:22px 0 10px}
+
+/* chips / filters */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 20px 4px;margin:14px -20px 0}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-size:13px;font-weight:500;white-space:nowrap}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--cream)}
+.selrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.sel{position:relative}
+.sel select{appearance:none;width:100%;padding:10px 30px 10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-size:13px;font-weight:500}
+.sel::after{content:"";position:absolute;right:13px;top:50%;width:7px;height:7px;border-right:1.5px solid var(--ink2);border-bottom:1.5px solid var(--ink2);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+
+/* cards */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.slot{margin-bottom:14px}
+.art{height:112px;position:relative;display:flex;align-items:flex-end;padding:12px 14px;color:#fff;overflow:hidden}
+.art .mono{position:absolute;right:-6px;top:-30px;font-family:Fraunces,serif;font-style:italic;font-size:150px;line-height:1;opacity:.18}
+.art .when{position:absolute;top:12px;left:14px;background:rgba(255,255,255,.95);color:var(--ink);border-radius:10px;padding:5px 9px;font-size:12px;font-weight:600;line-height:1.15;text-align:center}
+.art .when small{display:block;font-size:10px;font-weight:600;color:var(--wine);text-transform:uppercase;letter-spacing:.06em}
+.art .tier{position:absolute;top:12px;right:14px;background:rgba(0,0,0,.28);backdrop-filter:blur(6px);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600}
+.art .nm{font-family:Fraunces,serif;font-size:23px;line-height:1.05;position:relative;text-shadow:0 1px 12px rgba(0,0,0,.25)}
+.slot .body{padding:12px 14px 14px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12.5px;color:var(--ink2)}
+.meta span{display:inline-flex;align-items:center;gap:5px}
+.meta svg{width:14px;height:14px;opacity:.7}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:6px;background:#F1E6D4;color:#6B4A1C}
+.pool{display:flex;align-items:center;gap:8px;margin:12px 0;font-size:12.5px;color:var(--ink2)}
+.stack{display:flex}
+.stack .av{margin-left:-7px;border:2px solid var(--paper)}
+.stack .av:first-child{margin-left:0}
+.row{display:flex;gap:8px}
+.btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 14px;border-radius:12px;font-weight:600;font-size:14px;transition:transform .08s,background .15s}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:var(--wine);color:#fff}.btn.pri:hover{background:var(--wine2)}
+.btn.sec{background:transparent;border:1px solid var(--ink);}
+.btn.ghost{background:#EFE6D6}
+.btn.ok{background:var(--sage);color:#fff}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.btn.sm{padding:8px 11px;font-size:13px;border-radius:10px;flex:0 0 auto}
+
+.av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.av.lg{width:44px;height:44px;font-size:15px}
+
+/* list rows */
+.person{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.person:last-child{border-bottom:0}
+.person .n{font-weight:600}
+.person .d{font-size:12.5px;color:var(--ink2)}
+.why{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.why span{font-size:11px;padding:2px 7px;border-radius:6px;background:#EEF2EC;color:var(--sage);font-weight:500}
+.score{font-family:Fraunces,serif;font-size:20px;text-align:right;line-height:1}
+.score small{display:block;font-family:Inter;font-size:10px;color:var(--ink3);margin-top:2px}
+.check{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--ink3);display:grid;place-items:center;margin-top:8px;margin-left:auto}
+.person.sel .check{background:var(--wine);border-color:var(--wine)}
+.person.sel .check::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.person.dis{opacity:.45}
+.status{font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;white-space:nowrap}
+.st-pending{background:#F4ECDD;color:var(--warn)}
+.st-accepted{background:#E3EFE6;color:var(--ok)}
+.st-declined{background:#F6E3E1;color:var(--bad)}
+.st-host{background:var(--ink);color:var(--cream)}
+
+/* stepper */
+.stepper{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:14px 0 6px}
+.stepper div{height:4px;border-radius:2px;background:var(--line)}
+.stepper div.on{background:var(--wine)}
+.steplabels{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;font-size:10px;color:var(--ink3);font-weight:500}
+.steplabels span.on{color:var(--ink)}
+
+.banner{border-radius:14px;padding:12px 14px;font-size:13px;display:flex;gap:10px;align-items:flex-start;margin:12px 0}
+.banner svg{width:18px;height:18px;flex-shrink:0;margin-top:1px}
+.banner.info{background:#F1E6D4;color:#5A3F17}
+.banner.good{background:#E3EFE6;color:#23583A}
+.banner.bad{background:#F6E3E1;color:#7E2620}
+
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;padding:12px 14px}
+.kv dt{color:var(--ink3)}.kv dd{font-weight:500;text-align:right}
+
+/* rewards */
+.ring{position:relative;width:170px;height:170px;margin:10px auto 6px}
+.ring svg{transform:rotate(-90deg)}
+.ring .c{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring .c b{font-family:Fraunces,serif;font-weight:400;font-size:46px;line-height:1}
+.ring .c small{display:block;font-size:12px;color:var(--ink3)}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+table.t th{text-align:left;font-weight:600;color:var(--ink3);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:10px 14px;border-bottom:1px solid var(--line)}
+table.t td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+
+/* sheet / modal */
+.scrim{position:absolute;inset:0;background:rgba(30,26,23,.42);opacity:0;pointer-events:none;transition:opacity .25s;z-index:20}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--cream);border-radius:26px 26px 0 0;padding:10px 20px calc(22px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.8,.2,1);z-index:21;max-height:88%;overflow-y:auto}
+.sheet.on{transform:none}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 14px}
+
+/* onboarding */
+#onb{position:absolute;inset:0;background:var(--cream);z-index:30;display:flex;flex-direction:column;padding:24px 22px calc(22px + env(safe-area-inset-bottom));overflow-y:auto}
+#onb.hide{display:none}
+.hero{flex:1;display:flex;flex-direction:column;justify-content:center}
+.plate{width:180px;height:180px;border-radius:50%;margin:0 auto 26px;background:radial-gradient(circle at 50% 50%,#fff 0 52%,#EFE6D6 53% 60%,#fff 61% 68%,transparent 69%),conic-gradient(from 20deg,var(--wine),var(--brass),var(--sage),var(--wine));display:grid;place-items:center;position:relative;animation:spin 30s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.plate span{position:absolute;width:30px;height:30px;border-radius:50%;border:3px solid var(--paper);display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.field input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--paper)}
+.wrap{display:flex;flex-wrap:wrap;gap:7px}
+.wrap .chip{padding:7px 11px;font-size:12.5px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:#EAE0CE;border-radius:12px;padding:3px}
+.seg button{padding:9px;border-radius:10px;font-weight:600;font-size:13px;color:var(--ink2)}
+.seg button.on{background:var(--paper);color:var(--ink);box-shadow:var(--shadow)}
+.cardmock{border-radius:16px;padding:18px;color:#fff;background:linear-gradient(135deg,#2B2420,#5A2129);height:150px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow)}
+.cardmock .num{font-size:18px;letter-spacing:.14em;font-weight:500}
+.pg{display:flex;gap:6px;justify-content:center;margin:0 0 18px}
+.pg i{width:6px;height:6px;border-radius:3px;background:var(--line);transition:width .2s}
+.pg i.on{width:20px;background:var(--wine)}
+
+.toast{position:absolute;left:50%;top:66px;transform:translate(-50%,-140%);background:var(--ink);color:var(--cream);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:500;z-index:40;transition:transform .3s cubic-bezier(.2,.8,.2,1);max-width:88%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.toast.on{transform:translate(-50%,0)}
+.empty{text-align:center;padding:40px 20px;color:var(--ink3);font-size:14px}
+.empty .serif{font-size:22px;color:var(--ink);margin-bottom:6px}
+.back{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.back svg{width:16px;height:16px}
+.pulse{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+.fade{animation:fade .3s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}}
+.demo{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin:16px 0 8px;display:flex;align-items:center;gap:8px}
+.demo::after{content:"";flex:1;height:1px;background:var(--line)}
+.bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--sage);border-radius:4px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <aside class="pitch">
+    <div class="logo"><i></i>HopOnTable</div>
+    <h1>A guaranteed seat at a <em>small, curated</em> table.</h1>
+    <p class="lead">Dinner in Paris with 2–4 well-matched strangers, at a restaurant worth showing up for. You pick the cuisine, format, arrondissement and budget. The host picks the company.</p>
+    <ol class="steps">
+      <li><div><b>Host opens a table</b>Pick a slot at a partner restaurant — e.g. gastronomic Lebanese in the 8th.</div></li>
+      <li><div><b>Shortlist, not swipes</b>We rank people interested in that slot; the host invites up to 4.</div></li>
+      <li><div><b>Guests accept or decline</b>No rejection visibility — and a “no” can open a new table.</div></li>
+      <li><div><b>Locked 24h before</b>Table number confirmed with the restaurant. Free to join; a no-show fee only if you skip.</div></li>
+    </ol>
+    <div class="demo-note">Clickable sample app · all people & restaurants are fictional · data stays in your browser. <button class="linkbtn" onclick="resetDemo()">Reset demo</button></div>
+  </aside>
+
+  <div class="phone"><div id="app">
+    <div class="top">
+      <div class="logo"><i></i>HopOnTable</div>
+      <div class="row">
+        <a class="iconbtn" href="#partner" title="Restaurant partner view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9M3 9h18M3 9v11h18V9M9 20v-6h6v6"/></svg></a>
+        <button class="iconbtn" onclick="openProfile()" title="Profile"><span id="meAv"></span></button>
+      </div>
+    </div>
+    <main id="view"></main>
+    <nav class="tabs" id="tabs"></nav>
+    <div class="scrim" id="scrim" onclick="closeSheet()"></div>
+    <div class="sheet" id="sheet"></div>
+    <div class="toast" id="toast"></div>
+    <div id="onb" class="hide"></div>
+  </div></div>
+</div>
+
+<script>
+/* ============================================================
+   HopOnTable — sample app (vanilla JS, no build step)
+   All data is fictional and lives in localStorage.
+   ============================================================ */
+const KEY='hopontable.v1';
+const DAY=864e5, HOUR=36e5;
+
+const TIERS={
+  casual:{key:'casual',label:'€25–35',avg:30,pts:10,fee:10,menu:'Main, or main + 1 side',drinks:'1 glass of wine or soft drink'},
+  mid:{key:'mid',label:'€40–60',avg:50,pts:16,fee:18,menu:'Starter + main, or main + dessert',drinks:'1 glass of champagne + shared bottle of wine'},
+  gastro:{key:'gastro',label:'€70+',avg:85,pts:28,fee:28,menu:'5-course tasting menu',drinks:'Champagne + wine pairing'}
+};
+
+const RESTAURANTS=[
+  {id:'cedre',name:'Maison Cèdre',cuisine:'Lebanese',format:'Gastronomique',arr:'8e',area:'Champs-Élysées',tier:'gastro',c:['#5A1822','#A0513A'],slots:[[2,'20:30'],[4,'20:30'],[6,'21:00']],hold:'Table 12'},
+  {id:'zaatar',name:'Chez Zaatar',cuisine:'Lebanese',format:'Street food',arr:'20e',area:'Belleville',tier:'casual',c:['#2F5B3A','#C2963E'],slots:[[3,'19:30'],[5,'20:00'],[6,'13:00']],hold:'Long table'},
+  {id:'vertbois',name:'Le Vertbois',cuisine:'French',format:'Gastronomique',arr:'3e',area:'Arts-et-Métiers',tier:'gastro',c:['#1F2A44','#8C6A3E'],slots:[[4,'20:00'],[5,'20:30']],hold:'Table 4'},
+  {id:'tournelles',name:'Bistrot des Tournelles',cuisine:'French',format:'Bistrot',arr:'4e',area:'Marais',tier:'mid',c:['#7A1F2B','#D08A4C'],slots:[[2,'20:00'],[3,'20:00'],[5,'19:30']],hold:'Table 7'},
+  {id:'lune',name:'Brasserie Lune',cuisine:'French',format:'Brasserie',arr:'11e',area:'Oberkampf',tier:'mid',c:['#243B3A','#B8893B'],slots:[[4,'20:00'],[6,'20:30']],hold:'Booth 3'},
+  {id:'cave',name:'Cave Nature',cuisine:'Wine & small plates',format:'Bar à vins',arr:'10e',area:'Canal Saint-Martin',tier:'mid',c:['#4B1D3F','#C06A5A'],slots:[[3,'20:30'],[5,'21:00']],hold:'Counter 1'},
+  {id:'verlaine',name:'Café Verlaine',cuisine:'French',format:'Café littéraire',arr:'6e',area:'Saint-Germain',tier:'casual',c:['#3E3A2F','#9C8E6A'],slots:[[1,'19:30'],[3,'19:30']],hold:'Window table'},
+  {id:'toit',name:'Le Toit Saint-Blaise',cuisine:'Mediterranean',format:'Rooftop',arr:'20e',area:'Saint-Blaise',tier:'mid',c:['#B0553A','#E3B45C'],slots:[[5,'20:00'],[6,'19:30']],hold:'Terrace 2'},
+  {id:'halle',name:'Halle Oberkampf',cuisine:'Mixed',format:'Street food hall',arr:'11e',area:'Oberkampf',tier:'casual',c:['#2E4A5C','#D9A441'],slots:[[4,'19:30'],[6,'13:00']],hold:'Bench A'},
+  {id:'batignolles',name:'Dimanche Batignolles',cuisine:'Brunch',format:'Brunch',arr:'17e',area:'Batignolles',tier:'casual',c:['#6E7F4F','#E0B071'],slots:[[0,'11:30'],[6,'11:30']],hold:'Table 9'},
+  {id:'passage',name:'Passage Secret',cuisine:'Japanese',format:'City gem',arr:'2e',area:'Passage Choiseul',tier:'mid',c:['#2A2A2A','#B0433A'],slots:[[2,'19:30'],[4,'19:30']],hold:'Counter 6'}
+];
+
+const INTERESTS=['Food','Wine','Travel','Art','Books','Music','Cinema','Tech','Design','Running','Photography','Startups','History','Fashion','Cooking','Languages'];
+const LANGS=['English','French','Arabic','Spanish','Italian','German','Portuguese'];
+const DIETS=['No restrictions','Vegetarian','Vegan','Halal','Pescatarian','Gluten-free'];
+
+const PEOPLE=[
+  {id:'yas',name:'Yasmine',age:29,from:'Paris 9e',langs:['French','Arabic','English'],ints:['Food','Art','Design','Travel'],diet:'No restrictions',bio:'Architect. Collects cookbooks she never cooks from.'},
+  {id:'tom',name:'Thomas',age:34,from:'Paris 11e',langs:['French','English'],ints:['Wine','Cinema','Running'],diet:'No restrictions',bio:'Natural wine evangelist, recovering banker.'},
+  {id:'ana',name:'Ana',age:27,from:'Lisbon · traveling',langs:['Portuguese','English','Spanish'],ints:['Photography','Food','Travel'],diet:'Pescatarian',bio:'Solo trip, 5 days in Paris. Wants the real places.',trav:true},
+  {id:'kar',name:'Karim',age:31,from:'Paris 20e',langs:['Arabic','French','English'],ints:['Cooking','Music','Startups'],diet:'Halal',bio:'Product designer, makes a serious mloukhieh.'},
+  {id:'lea',name:'Léa',age:25,from:'Paris 5e',langs:['French','English','Italian'],ints:['Books','History','Art'],diet:'Vegetarian',bio:'PhD in medieval history. Will talk about Notre-Dame.'},
+  {id:'ben',name:'Ben',age:38,from:'London · traveling',langs:['English','French'],ints:['Wine','History','Food'],diet:'No restrictions',bio:'Here for a conference, escaping the hotel restaurant.',trav:true},
+  {id:'mar',name:'Marta',age:30,from:'Madrid · traveling',langs:['Spanish','English'],ints:['Design','Fashion','Photography'],diet:'No restrictions',bio:'Textile designer on a sourcing trip.',trav:true},
+  {id:'hug',name:'Hugo',age:28,from:'Paris 10e',langs:['French','English','German'],ints:['Tech','Music','Running'],diet:'No restrictions',bio:'Backend engineer, DJ on weekends.'},
+  {id:'nou',name:'Nour',age:33,from:'Paris 15e',langs:['Arabic','French','English'],ints:['Food','Languages','Travel','Books'],diet:'Halal',bio:'Translator. Has opinions about hummus.'},
+  {id:'jul',name:'Julien',age:41,from:'Paris 6e',langs:['French','English','Italian'],ints:['Wine','Cooking','History'],diet:'No restrictions',bio:'Chef-turned-teacher. Brings the good questions.'},
+  {id:'sof',name:'Sofia',age:26,from:'Milan · traveling',langs:['Italian','English','French'],ints:['Art','Fashion','Food'],diet:'Vegetarian',bio:'Museum hopping by day, dinner company by night.',trav:true},
+  {id:'dan',name:'Daniel',age:36,from:'Paris 17e',langs:['English','German','French'],ints:['Startups','Tech','Wine'],diet:'No restrictions',bio:'Berliner in Paris. Founder, second time.'},
+  {id:'ines',name:'Inès',age:29,from:'Paris 3e',langs:['French','Spanish','English'],ints:['Cinema','Books','Photography'],diet:'Gluten-free',bio:'Film editor. Knows every cinéma de quartier.'},
+  {id:'omar',name:'Omar',age:35,from:'Dubai · traveling',langs:['Arabic','English'],ints:['Food','Startups','Travel'],diet:'Halal',bio:'In town for VivaTech. Hungry.',trav:true},
+  {id:'cla',name:'Claire',age:32,from:'Paris 18e',langs:['French','English'],ints:['Music','Running','Cooking'],diet:'Vegan',bio:'Cellist. Runs the canal every morning.'},
+  {id:'raf',name:'Rafael',age:30,from:'São Paulo · traveling',langs:['Portuguese','Spanish','English'],ints:['Music','Food','Photography'],diet:'No restrictions',bio:'Two weeks, one goal: eat everything.',trav:true}
+];
+const AVC=['#7A1F2B','#4F6B55','#B8893B','#2E4A5C','#6B4A7A','#A0513A','#3E5E73','#8A6D3B'];
+
+/* ---------- state ---------- */
+let S=load();
+function fresh(){
+  return {me:null,onboarded:false,points:0,history:[],sessions:[],invites:null,interested:{},redeemed:[]};
+}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v===1)return s}catch(e){}return Object.assign(fresh(),{v:1})}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function resetDemo(){try{localStorage.removeItem(KEY)}catch(e){}location.hash='#discover';location.reload()}
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const R=id=>RESTAURANTS.find(r=>r.id===id);
+const P=id=>id==='me'?meAsPerson():PEOPLE.find(p=>p.id===id);
+function hash(str){let h=2166136261;for(const c of str){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function avatar(p,cls=''){const col=p.id==='me'?'#1E1A17':AVC[hash(p.id)%AVC.length];return `<span class="av ${cls}" style="background:${col}">${esc(p.name[0])}</span>`}
+function meAsPerson(){const m=S.me||{};return {id:'me',name:m.name||'You',age:m.age||30,from:'You',langs:m.langs||['English'],ints:m.ints||[],diet:m.diet||'No restrictions'}}
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function slotDate(s){return new Date(s.ts)}
+function fmtDay(ts){const d=new Date(ts);const t=new Date();t.setHours(0,0,0,0);const diff=Math.round((new Date(d).setHours(0,0,0,0)-t)/DAY);return diff===0?'Tonight':diff===1?'Tomorrow':DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()]}
+function fmtTime(ts){const d=new Date(ts);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function dur(ms){if(ms<=0)return 'now';const d=Math.floor(ms/DAY),h=Math.floor(ms%DAY/HOUR),m=Math.floor(ms%HOUR/6e4);return d?`${d}d ${h}h`:h?`${h}h ${m}m`:`${m}m`}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2600)}
+
+/* recurring slots over the next 12 days (not a fixed weekday) */
+function upcomingSlots(){
+  const out=[];const now=Date.now();const base=new Date();base.setHours(0,0,0,0);
+  for(let i=0;i<12;i++){
+    const d=new Date(base.getTime()+i*DAY);
+    for(const r of RESTAURANTS)for(const [dow,time] of r.slots){
+      if(d.getDay()!==dow)continue;
+      const [hh,mm]=time.split(':').map(Number);const ts=new Date(d).setHours(hh,mm,0,0);
+      if(ts<now+2*HOUR)continue;
+      out.push({key:r.id+'@'+ts,rid:r.id,ts});
+    }
+  }
+  return out.sort((a,b)=>a.ts-b.ts);
+}
+function slotByKey(k){const [rid,ts]=k.split('@');return {key:k,rid,ts:+ts}}
+/* deterministic pool of people interested in a slot */
+function poolFor(key){
+  const h=hash(key);const n=5+(h%6);
+  const ranked=PEOPLE.map(p=>({p,k:hash(key+p.id)})).sort((a,b)=>a.k-b.k).slice(0,n).map(x=>x.p);
+  const r=R(slotByKey(key).rid);
+  // halal / vegetarian guests skip venues that don't fit, travelers love city gems
+  return ranked.filter(p=>!(r.format==='Bar à vins'&&p.diet==='Halal'));
+}
+function compat(p){
+  const me=meAsPerson();const why=[];let s=38;
+  const si=p.ints.filter(x=>me.ints.includes(x));if(si.length){s+=Math.min(3,si.length)*11;why.push(...si.slice(0,2))}
+  const sl=p.langs.filter(x=>me.langs.includes(x));if(sl.length){s+=12;why.push('Speaks '+sl[0])}
+  if(Math.abs(p.age-me.age)<=5){s+=10;why.push('Similar age')}
+  if(p.diet===me.diet||p.diet==='No restrictions'||me.diet==='No restrictions'){s+=6}else why.push(p.diet);
+  s+=hash(p.id+me.name)%7;
+  return {score:Math.min(98,s),why:why.slice(0,3)};
+}
+
+/* ---------- router ---------- */
+const TABS=[
+  ['discover','Discover','<path d="M12 21s-7-5.5-7-11a7 7 0 1114 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>'],
+  ['invites','Invites','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>'],
+  ['tables','My tables','<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/>'],
+  ['rewards','Rewards','<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>'],
+  ['how','How','<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2.2M12 17h.01"/>']
+];
+let filt={cuisine:'All',arr:'Any',tier:'Any'};
+function route(){
+  const [name,arg]=(location.hash.slice(1)||'discover').split('/');
+  const views={discover,invites,tables,rewards,how,host,partner};
+  const v=views[name]||discover;
+  $('#view').innerHTML=`<div class="fade">${v(arg?decodeURIComponent(arg):undefined)}</div>`;
+  const pendingInv=(S.invites||[]).filter(i=>i.status==='pending').length;
+  $('#tabs').innerHTML=TABS.map(([k,l,ic])=>`<a href="#${k}" class="${(name||'discover')===k?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ic}</svg>${l}${k==='invites'&&pendingInv?`<span class="dot">${pendingInv}</span>`:''}</a>`).join('');
+  $('#meAv').innerHTML=`<span class="av" style="width:28px;height:28px;background:#1E1A17">${esc(meAsPerson().name[0])}</span>`;
+}
+window.addEventListener('hashchange',()=>{route();$('#view').scrollTop=0});
+function rerender(){const st=$('#view').scrollTop;route();$('#view').scrollTop=st}
+
+/* ---------- views ---------- */
+const ICON={
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.5-7-11a7 7 0 1114 0c0 5.5-7 11-7 11z"/></svg>',
+  fork:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 3v8M5 3v5a2 2 0 004 0V3M7 11v10M17 3c-2 0-3 2-3 5s1 4 3 4v9"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg>'
+};
+
+function discover(){
+  const me=meAsPerson();
+  const combos=['All',...new Set(RESTAURANTS.map(r=>r.cuisine+' · '+r.format))];
+  const arrs=['Any',...[...new Set(RESTAURANTS.map(r=>r.arr))].sort((a,b)=>parseInt(a)-parseInt(b))];
+  const slots=upcomingSlots().filter(s=>{const r=R(s.rid);
+    return (filt.cuisine==='All'||r.cuisine+' · '+r.format===filt.cuisine)&&(filt.arr==='Any'||r.arr===filt.arr)&&(filt.tier==='Any'||r.tier===filt.tier)});
+  const hr=new Date().getHours();
+  return `
+  <h2 class="h">${hr<17?'Bonjour':'Bonsoir'}, <em>${esc(me.name)}</em>.</h2>
+  <p class="sub">Choose the experience — we'll find the company.</p>
+  <div class="chips">${combos.slice(0,1).concat(['Lebanese · Gastronomique','Lebanese · Street food','French · Gastronomique','French · Bistrot','Wine & small plates · Bar à vins','Brunch · Brunch','Japanese · City gem']).map(c=>`<button class="chip ${filt.cuisine===c?'on':''}" onclick="setF('cuisine','${esc(c)}')">${esc(c==='All'?'All tables':c.replace(' · Brunch','').replace('Wine & small plates · ',''))}</button>`).join('')}</div>
+  <div class="selrow">
+    <div class="sel"><select onchange="setF('arr',this.value)">${arrs.map(a=>`<option ${filt.arr===a?'selected':''} value="${a}">${a==='Any'?'Any arrondissement':a+' arrondissement'}</option>`).join('')}</select></div>
+    <div class="sel"><select onchange="setF('tier',this.value)"><option value="Any">Any budget</option>${Object.values(TIERS).map(t=>`<option value="${t.key}" ${filt.tier===t.key?'selected':''}>${t.label} / head</option>`).join('')}</select></div>
+  </div>
+  <h3 class="sec">${slots.length} upcoming slots</h3>
+  ${slots.length?slots.slice(0,24).map(slotCard).join(''):`<div class="empty"><div class="serif">No slots match.</div>Loosen a filter — narrower pools fill slower.</div>`}
+  `;
+}
+function setF(k,v){filt[k]=v;rerender()}
+function slotCard(s){
+  const r=R(s.rid);const t=TIERS[r.tier];const pool=poolFor(s.key);
+  const mine=S.sessions.find(x=>x.key===s.key);const isIn=S.interested[s.key];
+  const inv=(S.invites||[]).find(i=>i.key===s.key&&['confirmed','locked'].includes(i.status));
+  const cnt=pool.length+(isIn?1:0);
+  let actions;
+  if(mine)actions=`<a class="btn pri" href="#host/${encodeURIComponent(mine.id)}">You're hosting · open</a>`;
+  else if(inv)actions=`<a class="btn ok" href="#tables">You have a seat ${ICON.check.replace('<svg','<svg width="16" height="16"')}</a>`;
+  else actions=`<button class="btn pri" onclick="startHost('${s.key}')">Host this table</button><button class="btn sec" onclick="toggleIn('${s.key}')">${isIn?'✓ In the pool':"I'm in"}</button>`;
+  return `<div class="card slot">
+    <div class="art" style="background:linear-gradient(135deg,${r.c[0]},${r.c[1]})">
+      <span class="mono">${esc(r.name.replace(/^(Le |La |Chez |Maison |Café |Cave |Halle |Bistrot des |Brasserie |Dimanche |Passage )/,'')[0])}</span>
+      <span class="when"><small>${fmtDay(s.ts)}</small>${fmtTime(s.ts)}</span>
+      <span class="tier">${t.label}</span>
+      <span class="nm">${esc(r.name)}</span>
+    </div>
+    <div class="body">
+      <div class="meta"><span class="tag">${esc(r.cuisine)} · ${esc(r.format)}</span><span>${ICON.pin}${r.arr} · ${esc(r.area)}</span></div>
+      <div class="pool"><span class="stack">${pool.slice(0,4).map(p=>avatar(p)).join('')}</span>${cnt} interested in this slot · tables of 3–5</div>
+      <div class="row">${actions}</div>
+    </div></div>`;
+}
+function toggleIn(k){if(S.interested[k])delete S.interested[k];else{S.interested[k]=1;toast("You're in the pool — hosts can now invite you.")}save();rerender()}
+
+/* ---------- host flow ---------- */
+function startHost(key){
+  closeSheet();
+  let s=S.sessions.find(x=>x.key===key);
+  if(!s){s={id:'s'+Date.now().toString(36),key,invited:[],status:'open',created:Date.now()};S.sessions.push(s);save()}
+  location.hash='#host/'+s.id;
+}
+let picks=new Set();
+function host(id){
+  const s=S.sessions.find(x=>x.id===id);if(!s)return `<div class="empty">Session not found.</div>`;
+  const slot=slotByKey(s.key),r=R(slot.rid),t=TIERS[r.tier];
+  const accepted=s.invited.filter(i=>i.status==='accepted');
+  const pending=s.invited.filter(i=>i.status==='pending');
+  const group=1+accepted.length;
+  const invitedIds=new Set(s.invited.map(i=>i.pid));
+  const cands=poolFor(s.key).map(p=>({p,...compat(p)})).sort((a,b)=>b.score-a.score);
+  const openSeats=4-accepted.length-pending.length;
+  const stage=s.status==='locked'?4:s.status==='done'?5:group>=3?3:s.invited.length?2:1;
+  const cutoff=slot.ts-48*HOUR, lock=slot.ts-24*HOUR;
+  let body='';
+  if(s.status==='open'){
+    body+=`<h3 class="sec">Your table · ${group} of 5 seats filled</h3>
+    <div class="card">
+      <div class="person"><div>${avatar(meAsPerson(),'lg')}</div><div><div class="n">${esc(meAsPerson().name)}</div><div class="d">Host</div></div><span class="status st-host">Host</span></div>
+      ${s.invited.map(i=>{const p=P(i.pid);return `<div class="person"><div>${avatar(p,'lg')}</div><div><div class="n">${esc(p.name)}, ${p.age}</div><div class="d">${esc(p.from)}</div></div><span class="status st-${i.status} ${i.status==='pending'?'pulse':''}">${i.status==='pending'?'Invited…':i.status==='accepted'?'Accepted':'Declined'}</span></div>`}).join('')}
+    </div>
+    ${group>=3?`<div class="banner good">${ICON.check}<div><b>Viable table.</b> You can lock in at ${group} now, or keep a seat open for up to 5. ${cutoff<Date.now()?'Last-minute table — confirm now to keep the hold.':'Unfilled holds release back to the restaurant in '+dur(cutoff-Date.now())+'.'}</div></div>
+      <button class="btn pri" style="width:100%" onclick="confirmGroup('${s.id}')">${ICON.lock.replace('<svg','<svg width="16" height="16"')} Confirm table of ${group}</button>`
+      :`<div class="banner info">${ICON.info}<div>A table needs <b>at least 3</b> (you + 2). If it's not viable ${cutoff<Date.now()?'soon (last-minute slot)':'in '+dur(cutoff-Date.now())}, the hold goes back to ${esc(r.name)} — nobody's left with a dead table.</div></div>`}
+    ${openSeats<=0?`<p class="sub" style="margin-top:16px;text-align:center">All 4 guest seats are invited. Waiting on replies.</p>`:`<h3 class="sec">Shortlist · pick up to ${openSeats}</h3>
+    <p class="sub" style="margin:-4px 0 10px;font-size:12.5px">Ranked by shared interests, languages, age range and dietary fit. Not a swipe deck — invitees never see who else was considered.</p>
+    <div class="card">${cands.map(c=>{const already=invitedIds.has(c.p.id);const sel=picks.has(c.p.id);const dis=already||(!sel&&picks.size>=openSeats);
+      return `<div class="person ${sel?'sel':''} ${dis?'dis':''}" ${dis?'':`onclick="pick('${c.p.id}',${openSeats})"`} style="cursor:${dis?'default':'pointer'}">
+        <div>${avatar(c.p,'lg')}</div>
+        <div><div class="n">${esc(c.p.name)}, ${c.p.age} ${c.p.trav?'<span class="tag" style="font-size:10px">Traveler</span>':''}</div><div class="d">${esc(c.p.bio)}</div><div class="why">${c.why.map(w=>`<span>${esc(w)}</span>`).join('')}</div></div>
+        <div><div class="score">${c.score}%<small>match</small></div>${already?'<div class="d" style="font-size:11px;margin-top:8px;text-align:right">invited</div>':'<div class="check"></div>'}</div>
+      </div>`}).join('')}</div>
+    <div style="position:sticky;bottom:0;padding-top:12px;background:linear-gradient(transparent,var(--cream) 30%)">
+      <button class="btn pri" style="width:100%" ${picks.size?'':'disabled'} onclick="sendInvites('${s.id}')">Send ${picks.size||''} invite${picks.size===1?'':'s'}</button>
+    </div>`}`;
+  } else if(s.status==='confirmed'||s.status==='locked'){
+    body+=tableSummary(s,true);
+  } else if(s.status==='done'){
+    body+=`<div class="banner good">${ICON.check}<div><b>Dinner completed.</b> +${t.pts} hosting points added.</div></div>`+tableSummary(s,false);
+  } else if(s.status==='released'){
+    body+=`<div class="banner bad">${ICON.info}<div>The group didn't reach 3 by the cutoff, so the table hold was released back to ${esc(r.name)}'s normal booking flow. No charge to anyone.</div></div>`;
+  }
+  return `<a class="back" href="#tables">${ICON.back}My tables</a>
+    <h2 class="h">${esc(r.name)}</h2>
+    <div class="meta" style="margin:6px 0 2px"><span class="tag">${esc(r.cuisine)} · ${esc(r.format)}</span><span>${r.arr} · ${esc(r.area)}</span><span>${t.label}/head</span></div>
+    <p class="sub" style="font-size:13px">${fmtDay(slot.ts)} at ${fmtTime(slot.ts)} · table held: ${esc(r.hold)}</p>
+    <div class="stepper">${[1,2,3,4,5].map(i=>`<div class="${i<=stage?'on':''}"></div>`).join('')}</div>
+    <div class="steplabels">${['Opened','Invites','3–5 group','Locked','Dinner'].map((l,i)=>`<span class="${i<stage?'on':''}">${l}</span>`).join('')}</div>
+    ${body}
+    ${s.status==='open'&&s.invited.length===0?`<div class="demo">Demo</div><button class="btn ghost sm" onclick="cancelSession('${s.id}')">Cancel this session</button>`:''}
+    ${s.status==='open'&&s.invited.length?`<div class="demo">Demo</div><button class="btn ghost sm" onclick="releaseSession('${s.id}')">Skip to cutoff (not viable → release)</button>`:''}`;
+}
+function pick(pid,max){if(picks.has(pid))picks.delete(pid);else if(picks.size<max)picks.add(pid);rerender()}
+function sendInvites(id){
+  const s=S.sessions.find(x=>x.id===id);
+  for(const pid of picks){s.invited.push({pid,status:'pending'});simulateReply(s.id,pid)}
+  toast(`${picks.size} invite${picks.size>1?'s':''} sent — they can't see who else was considered.`);
+  picks=new Set();save();rerender();
+}
+function simulateReply(sid,pid){
+  const p=P(pid);const {score}=compat(p);
+  const accept=Math.random()<(score>=75?.85:.62);
+  setTimeout(()=>{
+    const s=S.sessions.find(x=>x.id===sid);if(!s)return;const i=s.invited.find(x=>x.pid===pid);if(!i||i.status!=='pending')return;
+    i.status=accept?'accepted':'declined';save();
+    toast(accept?`${p.name} accepted your invite 🎉`:`${p.name} can't make it — they may open their own table.`);
+    if(location.hash.startsWith('#host/'+sid)||location.hash==='#tables')rerender();
+  },1400+Math.random()*2600);
+}
+function resumePending(){for(const s of S.sessions)for(const i of s.invited)if(i.status==='pending')simulateReply(s.id,i.pid)}
+function confirmGroup(id){const s=S.sessions.find(x=>x.id===id);s.invited=s.invited.filter(i=>i.status==='accepted');s.status='confirmed';save();toast('Group confirmed. Table locks with the restaurant 24h before.');rerender()}
+function cancelSession(id){S.sessions=S.sessions.filter(x=>x.id!==id);save();location.hash='#discover'}
+function releaseSession(id){const s=S.sessions.find(x=>x.id===id);s.status='released';save();rerender()}
+
+function tableSummary(s,live){
+  const slot=slotByKey(s.key),r=R(slot.rid),t=TIERS[r.tier];
+  const members=s.hostPid?[s.hostPid,...s.members,'me']:['me',...s.invited.filter(i=>i.status==='accepted').map(i=>i.pid)];
+  const lockAt=slot.ts-24*HOUR;const locked=s.status==='locked';
+  return `
+    <div class="banner ${locked?'good':'info'}">${ICON.lock}<div>${locked?`<b>Locked · ${esc(s.tableNo||r.hold)}.</b> Reservation is final with ${esc(r.name)}. See you there.`:`<b>Confirmed.</b> Table number locks with the restaurant in <b>${dur(lockAt-Date.now())}</b>. Cancel before then for free.`}</div></div>
+    <h3 class="sec">Your table · ${members.length} people</h3>
+    <div class="card">${members.map((pid,ix)=>{const p=P(pid);return `<div class="person"><div>${avatar(p,'lg')}</div><div><div class="n">${esc(p.name)}${pid==='me'?' (you)':', '+p.age}</div><div class="d">${esc(p.langs.join(' · '))}</div></div>${ix===0?'<span class="status st-host">Host</span>':''}</div>`}).join('')}</div>
+    <div class="card" style="margin-top:12px"><dl class="kv">
+      <dt>When</dt><dd>${fmtDay(slot.ts)}, ${fmtTime(slot.ts)}</dd>
+      <dt>Where</dt><dd>${esc(r.name)}, ${r.arr}</dd>
+      <dt>Budget</dt><dd>${t.label} / head, pay at the restaurant</dd>
+      <dt>No-show fee</dt><dd>€${t.fee} — only if you skip after the lock</dd>
+    </dl></div>
+    ${live?`<div class="demo">Demo — fast-forward</div><div class="row">
+      ${!locked?`<button class="btn ghost sm" onclick="leaveTable('${s.id}')">Cancel seat (free)</button><button class="btn ghost sm" onclick="lockNow('${s.id}')">→ 24h lock</button>`:''}
+      ${locked?`<button class="btn ok sm" onclick="dinnerDone('${s.id}')">Dinner happened</button><button class="btn ghost sm" onclick="noShow('${s.id}')">I no-showed</button>`:''}
+    </div>`:''}`;
+}
+function findTable(id){return S.sessions.find(x=>x.id===id)||(S.invites||[]).find(x=>x.id===id)}
+function lockNow(id){const s=findTable(id);s.status='locked';s.tableNo=R(slotByKey(s.key).rid).hold;save();toast('24h mark — table number locked with the restaurant.');rerender()}
+function leaveTable(id){
+  const inv=(S.invites||[]).find(x=>x.id===id);
+  if(inv){inv.status='declined';toast('Seat cancelled — it goes back to the host.')}else{const s=S.sessions.find(x=>x.id===id);s.status='released';toast('Table cancelled before the lock — no fee, hold released.')}
+  save();rerender();
+}
+function dinnerDone(id){
+  const s=findTable(id);const r=R(slotByKey(s.key).rid);const t=TIERS[r.tier];s.status='done';
+  if(!s.hostPid){S.points+=t.pts;S.history.unshift({ts:Date.now(),txt:`Hosted at ${r.name}`,pts:t.pts});toast(`+${t.pts} points for hosting 🥂`)}
+  else{S.history.unshift({ts:Date.now(),txt:`Joined at ${r.name}`,pts:0});toast('Dinner done — host it next time to earn points.')}
+  save();rerender();
+}
+function noShow(id){const s=findTable(id);const t=TIERS[R(slotByKey(s.key).rid).tier];s.status='noshow';S.history.unshift({ts:Date.now(),txt:`No-show fee charged (€${t.fee})`,pts:0});save();toast(`No-show fee of €${t.fee} charged to your card on file.`);rerender()}
+
+/* ---------- invites (guest side) ---------- */
+function seedInvites(){
+  if(S.invites)return;
+  const slots=upcomingSlots();
+  const a=slots.find(s=>s.rid==='cedre')||slots[2];
+  const b=slots.find(s=>s.rid==='cave'&&s.ts>a.ts)||slots.find(s=>s.rid==='cave')||slots[5];
+  S.invites=[
+    {id:'i1',key:a.key,hostPid:'yas',members:['nou','ben'],status:'pending',note:'Lebanese the way my teta makes it — but with a tasting menu.'},
+    {id:'i2',key:b.key,hostPid:'tom',members:['ines','hug','sof'],status:'pending',note:'Orange wine, small plates, no small talk about jobs.'}
+  ];save();
+}
+function invites(){
+  const list=S.invites||[];
+  const pend=list.filter(i=>i.status==='pending'),rest=list.filter(i=>i.status!=='pending');
+  return `<h2 class="h">Invites</h2><p class="sub">You were <em>invited</em>, not applied. Nobody sees who else was considered.</p>
+  ${pend.length?`<h3 class="sec">Waiting for you</h3>${pend.map(inviteCard).join('')}`:`<div class="empty"><div class="serif">No pending invites.</div>Tap “I'm in” on a slot to join its pool.</div>`}
+  ${rest.length?`<h3 class="sec">Earlier</h3>${rest.map(inviteCard).join('')}`:''}`;
+}
+function inviteCard(i){
+  const slot=slotByKey(i.key),r=R(slot.rid),t=TIERS[r.tier],h=P(i.hostPid);
+  return `<div class="card slot">
+    <div class="art" style="background:linear-gradient(135deg,${r.c[0]},${r.c[1]});height:92px">
+      <span class="when"><small>${fmtDay(slot.ts)}</small>${fmtTime(slot.ts)}</span><span class="tier">${t.label}</span><span class="nm">${esc(r.name)}</span></div>
+    <div class="body">
+      <div style="display:flex;gap:10px;align-items:center">${avatar(h,'lg')}<div><b>${esc(h.name)}</b> invited you<div class="d" style="font-size:12.5px;color:var(--ink2)">${esc(r.cuisine)} · ${esc(r.format)} · ${r.arr}</div></div></div>
+      <p style="font-family:Fraunces,serif;font-style:italic;margin:10px 0;color:var(--ink2)">“${esc(i.note)}”</p>
+      <div class="pool"><span class="stack">${[i.hostPid,...i.members].map(pid=>avatar(P(pid))).join('')}</span>${1+i.members.length} at the table so far</div>
+      ${i.status==='pending'?`<div class="row"><button class="btn pri" onclick="acceptInv('${i.id}')">Accept seat</button><button class="btn sec" onclick="declineInv('${i.id}')">Decline</button></div>`
+        :`<span class="status st-${i.status==='declined'?'declined':'accepted'}">${i.status==='declined'?'Declined':'Seat reserved'}</span>`}
+    </div></div>`;
+}
+function acceptInv(id){const i=S.invites.find(x=>x.id===id);i.status='confirmed';save();toast('Seat reserved. It locks 24h before dinner.');rerender()}
+function declineInv(id){
+  const i=S.invites.find(x=>x.id===id);i.status='declined';save();rerender();
+  const r=R(slotByKey(i.key).rid);
+  const alt=upcomingSlots().find(s=>s.rid===r.id&&s.key!==i.key)||upcomingSlots().find(s=>R(s.rid).cuisine===r.cuisine&&s.key!==i.key);
+  openSheet(`<h2 class="h" style="font-size:24px">Still hungry for <em>${esc(r.cuisine)}</em>?</h2>
+    <p class="sub" style="margin:6px 0 16px">Turn that “no” into your own table. You pick the time and company — we'll shortlist people from the same pool.</p>
+    ${alt?slotCard(alt):''}
+    <button class="btn ghost" style="width:100%;margin-top:4px" onclick="closeSheet()">Not now</button>`);
+}
+
+/* ---------- my tables ---------- */
+function tables(){
+  const hosted=S.sessions.slice().reverse();
+  const joined=(S.invites||[]).filter(i=>['confirmed','locked','done','noshow'].includes(i.status));
+  const all=[...hosted.map(s=>({s,host:true})),...joined.map(s=>({s,host:false}))];
+  if(!all.length)return `<h2 class="h">My tables</h2><div class="empty"><div class="serif">No tables yet.</div>Host one from <a href="#discover" class="linkbtn" style="font-size:14px">Discover</a>, or accept an invite.</div>`;
+  const label={open:['Filling','pending'],confirmed:['Confirmed','accepted'],locked:['Locked','host'],done:['Completed','accepted'],released:['Released','declined'],noshow:['No-show','declined']};
+  return `<h2 class="h">My tables</h2><p class="sub">Hosting earns points. Joining is always free.</p>
+  <h3 class="sec">All tables</h3>
+  ${all.map(({s,host})=>{const slot=slotByKey(s.key),r=R(slot.rid);const acc=host?1+s.invited.filter(i=>i.status==='accepted').length:1+s.members.length+1;const [l,c]=label[s.status]||['—','pending'];
+    const inner=`<div class="person" style="grid-template-columns:52px 1fr auto">
+      <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,${r.c[0]},${r.c[1]});display:grid;place-items:center;color:#fff;font-family:Fraunces,serif;font-size:22px;font-style:italic">${esc(r.name.split(' ').pop()[0])}</div>
+      <div><div class="n">${esc(r.name)}</div><div class="d">${fmtDay(slot.ts)} ${fmtTime(slot.ts)} · ${host?'You host':'Hosted by '+esc(P(s.hostPid).name)} · ${acc} ppl</div></div>
+      <span class="status st-${c}">${l}</span></div>`;
+    return host?`<a href="#host/${s.id}" style="text-decoration:none;color:inherit;display:block" class="card slot">${inner}</a>`
+      :`<div class="card slot">${inner}${['confirmed','locked'].includes(s.status)?`<div style="padding:0 14px 14px">${tableSummary(s,true)}</div>`:''}</div>`}).join('')}`;
+}
+
+/* ---------- rewards ---------- */
+function rewards(){
+  const pts=S.points,pct=Math.min(1,pts/100),C=2*Math.PI*74;
+  return `<h2 class="h">Rewards</h2><p class="sub">Points reward <b>hosting</b> — the harder role that makes tables happen.</p>
+  <div class="ring"><svg width="170" height="170"><circle cx="85" cy="85" r="74" fill="none" stroke="#E6DCCB" stroke-width="12"/><circle cx="85" cy="85" r="74" fill="none" stroke="#7A1F2B" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" style="transition:stroke-dashoffset .8s"/></svg>
+    <div class="c"><div><b>${Math.min(pts,100)}</b><small>of 100 points</small></div></div></div>
+  <p class="sub" style="text-align:center;margin-bottom:6px">${pts>=100?'<b style="color:var(--wine)">You\'ve unlocked a free dinner for two!</b>':`${100-pts} points to a free dinner for you + a friend`}</p>
+  ${pts>=100?`<button class="btn pri" style="width:100%;margin:8px 0" onclick="redeem()">Redeem free dinner for two</button>`:''}
+  <h3 class="sec">Points per hosted dinner</h3>
+  <div class="card"><table class="t"><tr><th>Budget</th><th>Points</th><th>To reach 100</th></tr>
+    ${Object.values(TIERS).map(t=>`<tr><td>${t.label}/head</td><td>${t.pts} pts</td><td>~${Math.ceil(100/t.pts)} dinners</td></tr>`).join('')}</table></div>
+  <h3 class="sec">What the reward is</h3>
+  <div class="card"><table class="t"><tr><th>Tier</th><th>Set menu (on us)</th><th>Drinks (on the house)</th></tr>
+    ${Object.values(TIERS).reverse().map(t=>`<tr><td>${t.key==='gastro'?'Gastronomic':t.key==='mid'?'Mid-tier':'Casual'}</td><td>${t.menu}</td><td>${t.drinks}</td></tr>`).join('')}</table></div>
+  <p class="sub" style="font-size:12px;margin-top:8px">Covers 2 people — you and a friend you bring. Your tier depends on the restaurant you choose.</p>
+  <h3 class="sec">History</h3>
+  ${S.history.length?`<div class="card">${S.history.map(h=>`<div class="person" style="grid-template-columns:1fr auto"><div><div class="n" style="font-weight:500">${esc(h.txt)}</div><div class="d">${new Date(h.ts).toLocaleDateString()}</div></div><b style="color:${h.pts?'var(--ok)':'var(--ink3)'}">${h.pts?'+'+h.pts:h.pts<0?h.pts:'—'}</b></div>`).join('')}</div>`:`<div class="empty" style="padding:20px">Host a dinner and mark it done to earn points.</div>`}
+  <div class="demo">Demo</div><button class="btn ghost sm" onclick="S.points+=30;S.history.unshift({ts:Date.now(),txt:'Demo bonus',pts:30});save();rerender()">+30 demo points</button>`;
+}
+function redeem(){
+  openSheet(`<h2 class="h" style="font-size:24px">Pick where to <em>celebrate</em></h2><p class="sub" style="margin:6px 0 14px">Same 100 points everywhere — the restaurant decides the menu.</p>
+  <div class="card">${RESTAURANTS.slice(0,7).map(r=>{const t=TIERS[r.tier];return `<div class="person" style="grid-template-columns:1fr auto;cursor:pointer" onclick="doRedeem('${r.id}')"><div><div class="n">${esc(r.name)} <span class="tag">${t.label}</span></div><div class="d">${t.menu} · ${t.drinks}</div></div><span style="color:var(--wine);font-weight:600">Choose</span></div>`}).join('')}</div>`);
+}
+function doRedeem(rid){const r=R(rid);S.points-=100;S.history.unshift({ts:Date.now(),txt:`Redeemed: dinner for two at ${r.name}`,pts:-100});save();closeSheet();toast(`Booked! Free dinner for two at ${r.name} 🥂`);rerender()}
+
+/* ---------- how it works ---------- */
+function how(){
+  const rows=[['Dating apps','1:1, high stakes, swipe fatigue, no fallback','Group of 3–5; matched on shared interest, not a photo'],
+    ['Timeleft','Blind matching, ~80 restaurants of varying tiers, paid membership','Host chooses; few deeply-vetted venues; free; points for hosts'],
+    ['Meetup / language cafés','No guaranteed seat or group; loud; one volunteer organizer','Reserved table, guaranteed group size, funded by restaurants']];
+  return `<h2 class="h">How <em>HopOnTable</em> works</h2>
+  <p class="sub">Not a blind date, not a crowded bar, not an anonymous algorithm.</p>
+  <h3 class="sec">The flow</h3>
+  <div class="card">${[['Host opens a session','Cuisine + venue type, arrondissement, budget, date/time.'],['Shortlist, ranked','Interests, age range, language, dietary needs. Host invites up to 4.'],['Guests accept or decline','No browsing, no rejection visibility. A “no” can open a new table.'],['3–5 by the cutoff','Lock in at 3 rather than lose the table. Not viable? Hold is released to the restaurant.'],['Locked 24h before','Table number final. No-show after the lock = fee by tier.']].map(([a,b],i)=>`<div class="person" style="grid-template-columns:34px 1fr"><span class="av" style="background:var(--wine);font-family:Fraunces">${i+1}</span><div><div class="n">${a}</div><div class="d">${b}</div></div></div>`).join('')}</div>
+  <h3 class="sec">For diners</h3>
+  <div class="card"><dl class="kv"><dt>Membership</dt><dd>Free</dd><dt>You pay</dt><dd>Your own check, at the restaurant</dd><dt>Card on file</dt><dd>Only charged on a no-show</dd>
+  ${Object.values(TIERS).map(t=>`<dt>No-show · ${t.label}</dt><dd>€${t.fee}</dd>`).join('')}</dl></div>
+  <h3 class="sec">vs. the alternatives</h3>
+  <div class="card"><table class="t"><tr><th></th><th>What's missing</th><th>HopOnTable</th></tr>${rows.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table></div>
+  <h3 class="sec">For restaurants</h3>
+  <div class="card"><dl class="kv"><dt>Cost</dt><dd>10% of the check, confirmed dinners only</dd><dt>Tables</dt><dd>Standing hold on off-peak slots</dd><dt>Downside</dt><dd>Unfilled holds released back</dd></dl></div>
+  <a href="#partner" class="btn sec" style="width:100%;margin-top:12px;text-decoration:none">Open the partner dashboard</a>
+  <p class="sub" style="font-size:12px;text-align:center;margin:18px 0 0">Sample app · fictional people & venues · <button class="linkbtn" style="font-size:12px" onclick="resetDemo()">reset demo</button></p>`;
+}
+
+/* ---------- partner view ---------- */
+let partnerR='cedre';
+function partner(){
+  const r=R(partnerR),t=TIERS[r.tier];
+  const slots=upcomingSlots().filter(s=>s.rid===r.id).slice(0,6);
+  let fills=0,rev=0;
+  const rows=slots.map(s=>{
+    const mine=S.sessions.find(x=>x.key===s.key);const inv=(S.invites||[]).find(x=>x.key===s.key&&x.status!=='declined'&&x.status!=='pending');
+    let n,st;
+    if(mine&&['confirmed','locked','done'].includes(mine.status)){n=1+mine.invited.filter(i=>i.status==='accepted').length;st=mine.status==='locked'?'Locked':'Confirmed'}
+    else if(inv){n=2+inv.members.length;st='Confirmed'}
+    else{const h=hash(s.key)%10;const cutoffPassed=s.ts-48*HOUR<Date.now();
+      if(h<6){n=3+h%3;st=s.ts-24*HOUR<Date.now()?'Locked':'Confirmed'}else if(cutoffPassed){n=0;st='Released'}else{n=h%3;st='Filling'}}
+    if(n>=3){fills++;rev+=n*t.avg}
+    return {s,n,st};
+  });
+  const comm=rev*.1;
+  return `<a class="back" href="#how">${ICON.back}Back</a>
+  <h2 class="h">Partner <em>dashboard</em></h2><p class="sub">What a restaurant sees. Standing holds, release-back, commission.</p>
+  <div class="sel" style="margin-top:12px"><select onchange="partnerR=this.value;rerender()">${RESTAURANTS.map(x=>`<option value="${x.id}" ${x.id===partnerR?'selected':''}>${esc(x.name)} — ${esc(x.format)}, ${x.arr}</option>`).join('')}</select></div>
+  <div class="selrow" style="margin-top:12px">
+    <div class="card" style="padding:14px"><div class="d" style="font-size:12px;color:var(--ink3)">Covers filled (next ${slots.length} slots)</div><div class="serif" style="font-size:28px">${rows.reduce((a,b)=>a+(b.n>=3?b.n:0),0)}</div></div>
+    <div class="card" style="padding:14px"><div class="d" style="font-size:12px;color:var(--ink3)">Incremental revenue</div><div class="serif" style="font-size:28px">€${rev.toLocaleString()}</div><div style="font-size:11.5px;color:var(--ink3)">10% fee: €${comm.toFixed(0)}</div></div>
+  </div>
+  <h3 class="sec">Held slots · ${esc(r.hold)}</h3>
+  <div class="card">${rows.map(({s,n,st})=>`<div class="person" style="grid-template-columns:1fr auto"><div><div class="n">${fmtDay(s.ts)} · ${fmtTime(s.ts)}</div>
+    <div class="bar" style="margin:7px 0 4px;width:150px"><i style="width:${n/5*100}%;background:${st==='Released'?'var(--ink3)':n>=3?'var(--sage)':'var(--brass)'}"></i></div>
+    <div class="d">${st==='Released'?'Released to your normal bookings':n+' of 5 seats'+(st==='Filling'?' · cutoff in '+dur(s.ts-48*HOUR-Date.now()):'')}</div></div>
+    <span class="status st-${st==='Released'?'declined':st==='Filling'?'pending':st==='Locked'?'host':'accepted'}">${st}</span></div>`).join('')}</div>
+  <div class="banner info">${ICON.info}<div>Tables that don't reach 3 guests by the cutoff (48h before) go back to your regular booking flow automatically. Once a table is locked (24h before), no-show fees protect the seat.</div></div>`;
+}
+
+/* ---------- sheet / profile ---------- */
+function openSheet(html){$('#sheet').innerHTML='<div class="grab"></div>'+html;$('#sheet').classList.add('on');$('#scrim').classList.add('on')}
+function closeSheet(){$('#sheet').classList.remove('on');$('#scrim').classList.remove('on')}
+function openProfile(){
+  const m=meAsPerson();
+  openSheet(`<div style="display:flex;gap:12px;align-items:center">${avatar(m,'lg')}<div><h2 class="h" style="font-size:22px;margin:0">${esc(m.name)}, ${m.age}</h2><div class="sub">${S.me?.trav?'Traveling in Paris':'Local'} · ${esc(m.diet)}</div></div></div>
+    <h3 class="sec">Languages</h3><div class="wrap">${m.langs.map(l=>`<span class="chip">${esc(l)}</span>`).join('')}</div>
+    <h3 class="sec">Interests</h3><div class="wrap">${m.ints.map(l=>`<span class="chip">${esc(l)}</span>`).join('')||'<span class="sub">None yet</span>'}</div>
+    <h3 class="sec">Payment</h3><div class="card" style="padding:12px 14px;font-size:13px">Demo card •••• 4242 — authorisation only, charged solely on a no-show.</div>
+    <div class="row" style="margin-top:18px"><button class="btn sec" onclick="closeSheet();S.onboarded=false;showOnb(1)">Edit profile</button><button class="btn ghost" onclick="resetDemo()">Reset demo</button></div>`);
+}
+
+/* ---------- onboarding ---------- */
+let draft={name:'',age:30,trav:false,langs:['English','French'],ints:['Food','Travel'],diet:'No restrictions'};
+function showOnb(step){
+  if(S.me)draft=Object.assign({},draft,S.me);
+  const o=$('#onb');o.classList.remove('hide');
+  const pg=`<div class="pg">${[0,1,2].map(i=>`<i class="${i===step?'on':''}"></i>`).join('')}</div>`;
+  if(step===0){o.innerHTML=`<div class="logo" style="justify-content:center"><i></i>HopOnTable</div>
+    <div class="hero"><div class="plate">${['Y','K','A','L'].map((c,i)=>`<span style="background:${AVC[i]};transform:rotate(${i*90+45}deg) translate(98px) rotate(-${i*90+45}deg)">${c}</span>`).join('')}</div>
+      <h2 class="h" style="text-align:center;font-size:32px">A seat at a <em>small, curated</em> table.</h2>
+      <p class="sub" style="text-align:center;margin:10px auto 0;max-width:300px">Dinner in Paris with 2–4 well-matched people. You choose the cuisine, format, neighborhood and budget.</p></div>
+    ${pg}<button class="btn pri" style="width:100%;flex:none" onclick="showOnb(1)">Find my table</button>
+    <p class="sub" style="text-align:center;font-size:11.5px;margin-top:10px">Sample app — fictional people & venues.</p>`}
+  if(step===1){o.innerHTML=`<h2 class="h">About <em>you</em></h2><p class="sub" style="margin-bottom:18px">Used to rank you on hosts' shortlists.</p>
+    <div class="field"><label>First name</label><input id="fName" value="${esc(draft.name)}" placeholder="e.g. Firass" maxlength="20"></div>
+    <div class="selrow" style="margin:0 0 14px"><div class="field" style="margin:0"><label>Age</label><input id="fAge" type="number" min="18" max="99" value="${draft.age}"></div>
+      <div class="field" style="margin:0"><label>In Paris as a</label><div class="seg"><button class="${draft.trav?'':'on'}" onclick="draft.trav=false;keepOnb(1)">Local</button><button class="${draft.trav?'on':''}" onclick="draft.trav=true;keepOnb(1)">Traveler</button></div></div></div>
+    <div class="field"><label>Languages</label><div class="wrap">${LANGS.map(l=>`<button class="chip ${draft.langs.includes(l)?'on':''}" onclick="tog('langs','${l}')">${l}</button>`).join('')}</div></div>
+    <div class="field"><label>Interests</label><div class="wrap">${INTERESTS.map(l=>`<button class="chip ${draft.ints.includes(l)?'on':''}" onclick="tog('ints','${l}')">${l}</button>`).join('')}</div></div>
+    <div class="field"><label>Dietary needs</label><div class="wrap">${DIETS.map(l=>`<button class="chip ${draft.diet===l?'on':''}" onclick="draft.diet='${l}';keepOnb(1)">${l}</button>`).join('')}</div></div>
+    <div style="flex:1"></div>${pg}<button class="btn pri" style="width:100%;flex:none" onclick="keepOnb(2)">Continue</button>`}
+  if(step===2){o.innerHTML=`<h2 class="h">Free to join. <em>Fair to restaurants.</em></h2>
+    <p class="sub" style="margin:6px 0 20px">Membership costs nothing — you pay your own check at the restaurant. We keep a card on file <b>only</b> to protect the table if someone skips after it's locked.</p>
+    <div class="cardmock"><div style="display:flex;justify-content:space-between;align-items:center"><span class="serif" style="font-size:17px">HopOnTable</span><span style="font-size:11px;opacity:.7">DEMO</span></div><div class="num">•••• •••• •••• 4242</div><div style="font-size:12px;opacity:.8">${esc(draft.name||'Your name')} · authorisation only</div></div>
+    <div class="card" style="margin-top:16px"><table class="t"><tr><th>Budget</th><th>No-show fee</th></tr>${Object.values(TIERS).map(t=>`<tr><td>${t.label}/head</td><td>€${t.fee}</td></tr>`).join('')}</table></div>
+    <p class="sub" style="font-size:12px;margin-top:10px">Cancel any time before the 24h lock — no fee. The fee applies only to the person who no-shows, never the group.</p>
+    <div style="flex:1;min-height:16px"></div>${pg}<button class="btn pri" style="width:100%;flex:none" onclick="finishOnb()">Add demo card & start</button>`}
+}
+function keepOnb(step){const n=$('#fName'),a=$('#fAge');if(n)draft.name=n.value.trim();if(a)draft.age=Math.max(18,Math.min(99,+a.value||30));showOnb(step)}
+function tog(k,v){keepOnbVals();const arr=draft[k];const i=arr.indexOf(v);if(i>=0)arr.splice(i,1);else arr.push(v);showOnb(1)}
+function keepOnbVals(){const n=$('#fName'),a=$('#fAge');if(n)draft.name=n.value.trim();if(a)draft.age=+a.value||30}
+function finishOnb(){
+  if(!draft.name)draft.name='Guest';
+  if(!draft.langs.length)draft.langs=['English'];
+  S.me={...draft,langs:[...draft.langs],ints:[...draft.ints]};S.onboarded=true;seedInvites();save();
+  $('#onb').classList.add('hide');route();
+  setTimeout(()=>toast(`${(S.invites||[]).filter(i=>i.status==='pending').length} dinner invites are waiting for you`),600);
+}
+
+/* ---------- boot ---------- */
+if(!S.onboarded)showOnb(0);else{seedInvites();resumePending()}
+route();
+setInterval(()=>{if(/^#(host|tables|partner)/.test(location.hash)&&!$('#sheet').classList.contains('on'))rerender()},30000);
+</script>
+</body>
+</html>
