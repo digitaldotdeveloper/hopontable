@@ -2,7 +2,9 @@
 
 A clickable prototype of **HopOnTable**: a guaranteed seat at a small, curated dinner table in Paris, matched by cuisine, venue type, arrondissement and budget.
 
-**Live demo:** served from GitHub Pages (see the repo's About link).
+**Live demo (phone-only, for mobile testing):** https://digitaldotdeveloper.github.io/hopontable/
+
+**Pitch + phone version (desktop guide):** https://digitaldotdeveloper.github.io/hopontable/guide.html — also exported as `HopOnTable-guide.pdf`.
 
 ## What you can try
 - **Onboarding** — profile (languages, interests, diet, local/traveler) and a demo card that's only charged on a no-show.
