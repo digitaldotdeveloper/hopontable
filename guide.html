@@ -98,6 +98,22 @@ h3.sec{font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppe
 .stack{display:flex}
 .stack .av{margin-left:-7px;border:2px solid var(--paper)}
 .stack .av:first-child{margin-left:0}
+.tbl{border:1px solid var(--line);border-radius:12px;background:var(--paper);margin:10px 0 4px;overflow:hidden}
+.tbl .who{display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+.tbl .who:last-child{border-bottom:0}
+.tbl .who .av{width:36px;height:36px;font-size:13px}
+.tbl .who .n{font-weight:600;font-size:13.5px}
+.tbl .who .d{font-size:11.5px;color:var(--ink2)}
+.tbl .who .role{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 7px;border-radius:6px;background:#F1E6D4;color:#6B4A1C;white-space:nowrap}
+.tbl .who .role.host{background:var(--wine);color:var(--cream)}
+.tbl .who .role.me{background:var(--ink);color:var(--cream)}
+.tbl .more{display:flex;align-items:center;gap:8px;padding:9px 12px;font-size:12px;color:var(--ink2);cursor:pointer;border-top:1px solid var(--line)}
+.tbl .who + .more{border-top:1px solid var(--line)}
+.tbl .more .av{width:24px;height:24px;font-size:10px}
+.ints{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.ints span{font-size:10.5px;padding:1px 6px;border-radius:5px;background:#EEF2EC;color:var(--sage);font-weight:500}
+.ints span.hit{background:#F1E6D4;color:#6B4A1C}
+.empty-tbl{padding:10px 12px;font-size:12px;color:var(--ink2)}
 .row{display:flex;gap:8px}
 .btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 14px;border-radius:12px;font-weight:600;font-size:14px;transition:transform .08s,background .15s}
 .btn:active{transform:scale(.98)}
@@ -327,6 +343,37 @@ function upcomingSlots(){
   return out.sort((a,b)=>a.ts-b.ts);
 }
 function slotByKey(k){const [rid,ts]=k.split('@');return {key:k,rid,ts:+ts}}
+/* demo: some slots already have a host who opened a table, with 0-2 confirmed guests.
+   real app: this comes from the session the host opened on that slot. */
+function tableFor(key){
+  const mine=S.sessions.find(x=>x.key===key);
+  if(mine)return {host:meAsPerson(),guests:mine.invited.filter(i=>i.status==='accepted').map(i=>P(i.pid)),mine:true};
+  const pool=poolFor(key);const h=hash('tbl'+key);
+  if(h%3===0||pool.length<3)return null;           // nobody has opened this table yet
+  const host=pool[0];const guests=pool.slice(1,1+(h>>4)%3);
+  return {host,guests,mine:false};
+}
+function sharedInts(p){const me=meAsPerson();return p.ints.map(i=>({i,hit:me.ints.includes(i)}))}
+function whoRow(p,role){
+  const roleCls=role==='Host'?'host':role==='You'?'me':'';
+  return `<div class="who" onclick="openPerson('${p.id}')">
+    <div>${avatar(p)}</div>
+    <div><div class="n">${esc(p.name)}, ${p.age}${p.trav?' <span class="tag" style="font-size:10px">Traveler</span>':''}</div>
+      <div class="d">${esc(p.from)} · ${p.langs.slice(0,2).map(esc).join(', ')}</div>
+      <div class="ints">${sharedInts(p).slice(0,4).map(x=>`<span class="${x.hit?'hit':''}">${esc(x.i)}</span>`).join('')}</div></div>
+    <span class="role ${roleCls}">${role}</span></div>`;
+}
+function openPerson(pid){
+  const p=P(pid);if(!p)return;const me=meAsPerson();
+  const shared=p.ints.filter(i=>me.ints.includes(i));const langs=p.langs.filter(l=>me.langs.includes(l));
+  openSheet(`<div style="display:flex;gap:12px;align-items:center">${avatar(p,'lg')}<div><h2 class="h" style="font-size:22px;margin:0">${esc(p.name)}, ${p.age}</h2><div class="sub">${esc(p.from)}${p.trav?' · Traveling':' · Local'} · ${esc(p.diet)}</div></div></div>
+    ${p.bio?`<p class="sub" style="margin-top:12px;font-size:14px;color:var(--ink)">${esc(p.bio)}</p>`:''}
+    ${pid!=='me'?`<div class="banner ${shared.length||langs.length?'good':'info'}" style="margin-top:14px">${ICON.check}<div>${shared.length?`<b>You share ${shared.map(esc).join(', ')}.</b> `:'<b>No shared interests yet.</b> '}${langs.length?`You both speak ${langs.map(esc).join(' and ')}.`:''}</div></div>`:''}
+    <h3 class="sec">Interests</h3><div class="wrap">${p.ints.map(l=>`<span class="chip ${me.ints.includes(l)&&pid!=='me'?'on':''}">${esc(l)}</span>`).join('')||'<span class="sub">None yet</span>'}</div>
+    <h3 class="sec">Languages</h3><div class="wrap">${p.langs.map(l=>`<span class="chip">${esc(l)}</span>`).join('')}</div>
+    <p class="sub" style="font-size:11.5px;margin-top:16px">First name, interests and languages only. Full name and phone are shared with the host after the table locks.</p>
+    <div class="row" style="margin-top:14px"><button class="btn sec" style="width:100%" onclick="closeSheet()">Close</button></div>`);
+}
 /* deterministic pool of people interested in a slot */
 function poolFor(key){
   const h=hash(key);const n=5+(h%6);
@@ -400,11 +447,21 @@ function slotCard(s){
   const r=R(s.rid);const t=TIERS[r.tier];const pool=poolFor(s.key);
   const mine=S.sessions.find(x=>x.key===s.key);const isIn=S.interested[s.key];
   const inv=(S.invites||[]).find(i=>i.key===s.key&&['confirmed','locked'].includes(i.status));
-  const cnt=pool.length+(isIn?1:0);
+  const tb=tableFor(s.key);
+  const seated=tb?[tb.host,...tb.guests]:[];const seatedIds=new Set(seated.map(p=>p.id));
+  const others=pool.filter(p=>!seatedIds.has(p.id));
+  const cnt=others.length+(isIn?1:0);
   let actions;
   if(mine)actions=`<a class="btn pri" href="#host/${encodeURIComponent(mine.id)}">You're hosting · open</a>`;
   else if(inv)actions=`<a class="btn ok" href="#tables">You have a seat ${ICON.check.replace('<svg','<svg width="16" height="16"')}</a>`;
+  else if(tb)actions=`<button class="btn pri" onclick="toggleIn('${s.key}')">${isIn?'✓ Asked for a seat':'Ask for a seat'}</button><button class="btn sec" onclick="startHost('${s.key}')">Host instead</button>`;
   else actions=`<button class="btn pri" onclick="startHost('${s.key}')">Host this table</button><button class="btn sec" onclick="toggleIn('${s.key}')">${isIn?'✓ In the pool':"I'm in"}</button>`;
+  const left=5-seated.length;
+  const tableHtml=tb
+    ?`<div class="tbl">${whoRow(tb.host,tb.mine?'You':'Host')}${tb.guests.map(p=>whoRow(p,'Confirmed')).join('')}
+        <div class="more" onclick="openPool('${s.key}')"><span class="stack">${others.slice(0,4).map(p=>avatar(p)).join('')}</span>${cnt} more asked for a seat · ${left} seat${left===1?'':'s'} left · host picks</div></div>`
+    :`<div class="tbl"><div class="empty-tbl">No host yet — open this table and pick your guests.</div>
+        <div class="more" onclick="openPool('${s.key}')"><span class="stack">${others.slice(0,4).map(p=>avatar(p)).join('')}</span>${cnt} interested · tables of 3–5</div></div>`;
   return `<div class="card slot">
     <div class="art" style="background:linear-gradient(135deg,${r.c[0]},${r.c[1]})">
       <span class="mono">${esc(r.name.replace(/^(Le |La |Chez |Maison |Café |Cave |Halle |Bistrot des |Brasserie |Dimanche |Passage )/,'')[0])}</span>
@@ -414,11 +471,21 @@ function slotCard(s){
     </div>
     <div class="body">
       <div class="meta"><span class="tag">${esc(r.cuisine)} · ${esc(r.format)}</span><span>${ICON.pin}${r.arr} · ${esc(r.area)}</span></div>
-      <div class="pool"><span class="stack">${pool.slice(0,4).map(p=>avatar(p)).join('')}</span>${cnt} interested in this slot · tables of 3–5</div>
+      ${tableHtml}
       <div class="row">${actions}</div>
     </div></div>`;
 }
-function toggleIn(k){if(S.interested[k])delete S.interested[k];else{S.interested[k]=1;toast("You're in the pool — hosts can now invite you.")}save();rerender()}
+function openPool(key){
+  const tb=tableFor(key);const seatedIds=new Set(tb?[tb.host,...tb.guests].map(p=>p.id):[]);
+  const list=poolFor(key).filter(p=>!seatedIds.has(p.id)).map(p=>({p,...compat(p)})).sort((a,b)=>b.score-a.score);
+  const sl=slotByKey(key);const r=R(sl.rid);
+  openSheet(`<h2 class="h" style="font-size:20px">Who's interested</h2><p class="sub" style="margin-bottom:12px">${esc(r.name)} · ${fmtDay(sl.ts)}. ${tb?'The host picks from this list.':'Whoever hosts picks from this list.'}</p>
+    <div class="tbl" style="margin:0">${list.map(c=>`<div class="who" onclick="openPerson('${c.p.id}')"><div>${avatar(c.p)}</div>
+      <div><div class="n">${esc(c.p.name)}, ${c.p.age}${c.p.trav?' <span class="tag" style="font-size:10px">Traveler</span>':''}</div><div class="d">${esc(c.p.from)}</div>
+      <div class="ints">${sharedInts(c.p).slice(0,4).map(x=>`<span class="${x.hit?'hit':''}">${esc(x.i)}</span>`).join('')}</div></div>
+      <div class="score" style="font-size:16px">${c.score}%<small>match</small></div></div>`).join('')}</div>`);
+}
+function toggleIn(k){if(S.interested[k])delete S.interested[k];else{S.interested[k]=1;toast(tableFor(k)?"Asked for a seat — the host sees your profile and picks.":"You're in the pool — hosts can now invite you.")}save();rerender()}
 
 /* ---------- host flow ---------- */
 function startHost(key){
