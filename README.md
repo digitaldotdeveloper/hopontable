@@ -12,6 +12,7 @@ A clickable prototype of **HopOnTable**: a guaranteed seat at a small, curated d
 - **Host a table** — ranked shortlist (shared interests, languages, age, diet), invite up to 4, watch accepts/declines arrive, confirm at 3–5.
 - **Invites** — accept a seat, or decline and immediately open your own table for the same cuisine.
 - **My tables** — 24h lock, table number, no-show fee, demo fast-forward buttons.
+- **Profile** — photo (upload or sample), one-line bio, interests, and a "moments from my tables" photo gallery.
 - **Rewards** — hosting points toward a free dinner for two, set menus by tier.
 - **Partner dashboard** — what a restaurant sees: held tables, release-back, 10% commission.
 

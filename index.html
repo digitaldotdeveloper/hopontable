@@ -212,6 +212,35 @@ table.t tr:last-child td{border-bottom:0}
 .demo::after{content:"";flex:1;height:1px;background:var(--line)}
 .bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--sage);border-radius:4px}
+.av{position:relative;overflow:hidden}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.av.hd{width:28px;height:28px;font-size:11px}
+.av.xl{width:78px;height:78px;font-size:28px}
+.pav{position:relative;display:inline-block;flex-shrink:0}
+.pav .cam{position:absolute;right:-3px;bottom:-3px;width:27px;height:27px;border-radius:50%;background:var(--wine);border:2.5px solid var(--cream);display:grid;place-items:center;color:#fff}
+.pav .cam svg{width:13px;height:13px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 2px}
+.stats div{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
+.stats b{display:block;font-family:Fraunces,serif;font-weight:600;font-size:21px;line-height:1.1}
+.stats small{font-size:11px;color:var(--ink2)}
+.presets{display:flex;gap:9px;overflow-x:auto;padding:4px 2px 6px;scrollbar-width:none}
+.presets::-webkit-scrollbar{display:none}
+.presets .av{width:50px;height:50px;font-size:16px;border:3px solid transparent;cursor:pointer;flex-shrink:0;box-sizing:border-box}
+.presets .av.on{border-color:var(--wine)}
+.presets .up{width:50px;height:50px;border-radius:50%;border:1.5px dashed var(--ink3);display:grid;place-items:center;color:var(--ink2);flex-shrink:0;cursor:pointer;background:var(--paper)}
+.presets .up svg{width:18px;height:18px}
+.moments{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.moments .m{aspect-ratio:1;border-radius:11px;background:#DCCFB8 center/cover no-repeat;position:relative;overflow:hidden;cursor:pointer}
+.moments .m img{width:100%;height:100%;object-fit:cover;display:block}
+.moments .m .cap{position:absolute;left:0;right:0;bottom:0;padding:18px 7px 6px;font-size:10.5px;font-weight:600;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.6));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.moments .add{aspect-ratio:1;border-radius:11px;border:1.5px dashed var(--ink3);display:grid;place-items:center;color:var(--ink2);font-size:12px;font-weight:600;cursor:pointer;background:var(--paper);text-align:center;line-height:1.2}
+.moments .add svg{width:20px;height:20px;margin-bottom:4px}
+.mbig{width:100%;aspect-ratio:1;border-radius:16px;object-fit:cover;background:#DCCFB8;display:block}
+.field textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--paper);resize:none;font:inherit;color:inherit;min-height:70px}
+.sechead{display:flex;align-items:flex-end;justify-content:space-between}
+.sechead .sec{margin-bottom:0}.sechead .linkbtn{margin-bottom:1px}
+.linkbtn{font-size:12.5px;font-weight:600;color:var(--wine)}
+.filein{display:none}
 </style>
 </head>
 <body>
@@ -301,8 +330,8 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const R=id=>RESTAURANTS.find(r=>r.id===id);
 const P=id=>id==='me'?meAsPerson():PEOPLE.find(p=>p.id===id);
 function hash(str){let h=2166136261;for(const c of str){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
-function avatar(p,cls=''){const col=p.id==='me'?'#1E1A17':AVC[hash(p.id)%AVC.length];return `<span class="av ${cls}" style="background:${col}">${esc(p.name[0])}</span>`}
-function meAsPerson(){const m=S.me||{};return {id:'me',name:m.name||'You',age:m.age||30,from:'You',langs:m.langs||['English'],ints:m.ints||[],diet:m.diet||'No restrictions'}}
+function avatar(p,cls=''){const col=p.id==='me'?'#1E1A17':AVC[hash(p.id)%AVC.length];const ph=p.photo||(PHOTOS[p.id]?pav(PHOTOS[p.id]):null);return `<span class="av ${cls}" style="background:${col}">${esc(p.name[0])}${ph?`<img src="${ph}" alt="" loading="lazy" onerror="this.remove()">`:''}</span>`}
+function meAsPerson(){const m=S.me||{};return {id:'me',name:m.name||'You',age:m.age||30,from:m.trav?'Traveling':'Paris',trav:!!m.trav,bio:m.bio||'',photo:m.photo||null,langs:m.langs||['English'],ints:m.ints||[],diet:m.diet||'No restrictions'}}
 const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function slotDate(s){return new Date(s.ts)}
@@ -391,7 +420,7 @@ function route(){
   $('#view').innerHTML=`<div class="fade">${v(arg?decodeURIComponent(arg):undefined)}</div>`;
   const pendingInv=(S.invites||[]).filter(i=>i.status==='pending').length;
   $('#tabs').innerHTML=TABS.map(([k,l,ic])=>`<a href="#${k}" class="${(name||'discover')===k?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ic}</svg>${l}${k==='invites'&&pendingInv?`<span class="dot">${pendingInv}</span>`:''}</a>`).join('');
-  $('#meAv').innerHTML=`<span class="av" style="width:28px;height:28px;background:#1E1A17">${esc(meAsPerson().name[0])}</span>`;
+  $('#meAv').innerHTML=avatar(meAsPerson(),'hd');
 }
 window.addEventListener('hashchange',()=>{route();$('#view').scrollTop=0});
 function rerender(){const st=$('#view').scrollTop;route();$('#view').scrollTop=st}
@@ -577,6 +606,7 @@ function leaveTable(id){
 }
 function dinnerDone(id){
   const s=findTable(id);const r=R(slotByKey(s.key).rid);const t=TIERS[r.tier];s.status='done';
+  S.moments=S.moments||[];S.moments.unshift({id:'m'+Date.now().toString(36),ts:Date.now(),rid:r.id,img:momImg(200+hash(r.id+Date.now())%700),cap:r.name});
   if(!s.hostPid){S.points+=t.pts;S.history.unshift({ts:Date.now(),txt:`Hosted at ${r.name}`,pts:t.pts});toast(`+${t.pts} points for hosting 🥂`)}
   else{S.history.unshift({ts:Date.now(),txt:`Joined at ${r.name}`,pts:0});toast('Dinner done — host it next time to earn points.')}
   save();rerender();
@@ -723,17 +753,115 @@ function partner(){
 /* ---------- sheet / profile ---------- */
 function openSheet(html){$('#sheet').innerHTML='<div class="grab"></div>'+html;$('#sheet').classList.add('on');$('#scrim').classList.add('on')}
 function closeSheet(){$('#sheet').classList.remove('on');$('#scrim').classList.remove('on')}
+/* ---------- photos (demo) ---------- */
+/* portraits for the fictional people; real app: user-uploaded, shown small, interests first */
+const PHOTOS={yas:47,tom:12,ana:32,kar:14,lea:45,ben:59,mar:24,hug:11,nou:49,jul:60,sof:26,dan:52,ines:41,omar:15,cla:44,raf:57};
+const pav=n=>'https://i.pravatar.cc/160?img='+n;
+const PRESET_AV=[3,5,9,16,20,25,33,36,40,48,56,65];
+const MOM_IDS=['1414235077428-338989a2e8c0','1504674900247-0877df9cc836','1517248135467-4c7edcad34c4','1555396273-367ea4eb4db5','1466978913421-dad2ebd01d17','1559339352-11d035aa65de','1476224203421-9ac39bcb3327','1540189549336-e6e99c3679fe','1482049016688-2d3e1b311543','1551218808-94e220e084d2','1546069901-ba9599a7e63c','1567620905732-2d1ec7ab7445'];
+const momImg=seed=>`https://images.unsplash.com/photo-${MOM_IDS[seed%MOM_IDS.length]}?w=480&h=480&fit=crop&q=70`;
+const ICON_CAM='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+const ICON_PLUS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+const ICON_TRASH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+/* downscale a picked file to a small JPEG data URL so it fits in localStorage */
+function readPhoto(inp,max,cb){
+  const f=inp.files&&inp.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=e=>{const im=new Image();im.onload=()=>{
+    const s=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');
+    c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    cb(c.toDataURL('image/jpeg',.82))};im.src=e.target.result};
+  rd.readAsDataURL(f);
+}
+function reSheet(html){const el=$('#sheet');const st=el.scrollTop;el.innerHTML='<div class="grab"></div>'+html;el.scrollTop=st}
+function fmtDate(ts){const d=new Date(ts);return d.getDate()+' '+MON[d.getMonth()]}
+
+/* ---------- my profile ---------- */
 function openProfile(){
   const m=meAsPerson();
-  openSheet(`<div style="display:flex;gap:12px;align-items:center">${avatar(m,'lg')}<div><h2 class="h" style="font-size:22px;margin:0">${esc(m.name)}, ${m.age}</h2><div class="sub">${S.me?.trav?'Traveling in Paris':'Local'} · ${esc(m.diet)}</div></div></div>
+  const dinners=S.history.filter(h=>/^(Hosted|Joined)/.test(h.txt)).length,hosted=S.history.filter(h=>/^Hosted/.test(h.txt)).length;
+  openSheet(`<div style="display:flex;gap:14px;align-items:center">
+      <span class="pav" onclick="openEdit('photo')">${avatar(m,'xl')}<span class="cam">${ICON_CAM}</span></span>
+      <div style="min-width:0"><h2 class="h" style="font-size:22px;margin:0">${esc(m.name)}, ${m.age}</h2>
+        <div class="sub" style="font-size:13px">${S.me?.trav?'Traveling in Paris':'Paris · Local'} · ${esc(m.diet)}</div>
+        ${m.bio?`<div style="font-size:13px;margin-top:4px">${esc(m.bio)}</div>`:`<button class="linkbtn" style="margin-top:4px" onclick="openEdit('bio')">+ Add a line about you</button>`}</div></div>
+    <div class="stats"><div><b>${dinners}</b><small>dinners</small></div><div><b>${hosted}</b><small>hosted</small></div><div><b>${S.points}</b><small>points</small></div></div>
+    <div class="sechead"><h3 class="sec">Interests</h3><button class="linkbtn" onclick="openEdit()">Edit</button></div>
+    <div class="wrap" style="margin-top:8px">${m.ints.map(l=>`<span class="chip">${esc(l)}</span>`).join('')||'<span class="sub">None yet</span>'}</div>
     <h3 class="sec">Languages</h3><div class="wrap">${m.langs.map(l=>`<span class="chip">${esc(l)}</span>`).join('')}</div>
-    <h3 class="sec">Interests</h3><div class="wrap">${m.ints.map(l=>`<span class="chip">${esc(l)}</span>`).join('')||'<span class="sub">None yet</span>'}</div>
+    <div class="sechead"><h3 class="sec">Moments from my tables</h3><button class="linkbtn" onclick="openAddMoment()">+ Add</button></div>
+    <p class="sub" style="font-size:12px;margin:2px 0 10px">Photos from dinners you've been to. Visible to people at your future tables.</p>
+    <div class="moments">${(S.moments||[]).map(mm=>`<div class="m" onclick="openMoment('${mm.id}')"><img src="${mm.img}" alt="" loading="lazy" onerror="this.remove()"><span class="cap">${esc(mm.cap)}</span></div>`).join('')}
+      <div class="add" onclick="openAddMoment()"><div>${ICON_PLUS}<br>Add photo</div></div></div>
     <h3 class="sec">Payment</h3><div class="card" style="padding:12px 14px;font-size:13px">Demo card •••• 4242 — authorisation only, charged solely on a no-show.</div>
-    <div class="row" style="margin-top:18px"><button class="btn sec" onclick="closeSheet();S.onboarded=false;showOnb(1)">Edit profile</button><button class="btn ghost" onclick="resetDemo()">Reset demo</button></div>`);
+    <div class="row" style="margin-top:18px"><button class="btn sec" onclick="openEdit()">Edit profile</button><button class="btn ghost" onclick="resetDemo()">Reset demo</button></div>`);
 }
 
+/* ---------- edit profile ---------- */
+let ed=null;
+function openEdit(focus){
+  const m=S.me||{};
+  ed={name:m.name||'',age:m.age||30,trav:!!m.trav,langs:[...(m.langs||[])],ints:[...(m.ints||[])],diet:m.diet||'No restrictions',bio:m.bio||'',photo:m.photo||null};
+  openSheet(editHtml());
+  if(focus==='bio')setTimeout(()=>$('#eBio')?.focus(),350);
+}
+function editHtml(){
+  const me=Object.assign(meAsPerson(),{name:ed.name||'You',photo:ed.photo});
+  return `<div class="sechead"><h2 class="h" style="font-size:22px">Edit profile</h2><button class="linkbtn" onclick="openProfile()">Cancel</button></div>
+    <div class="field" style="margin-top:14px"><label>Photo</label>
+      <div style="display:flex;gap:12px;align-items:center">
+        <span class="pav">${avatar(me,'xl')}</span>
+        <div style="min-width:0;flex:1"><div class="presets">
+          <label class="up" title="Upload from your phone">${ICON_CAM}<input class="filein" type="file" accept="image/*" onchange="readPhoto(this,480,d=>eSet('photo',d))"></label>
+          ${PRESET_AV.map(n=>`<span class="av ${ed.photo===pav(n)?'on':''}" style="background:#DCCFB8" onclick="eSet('photo','${pav(n)}')"><img src="${pav(n)}" alt="" onerror="this.remove()"></span>`).join('')}
+          ${ed.photo?`<span class="av" style="background:var(--ink);font-size:11px" onclick="eSet('photo',null)">None</span>`:''}
+        </div><div class="sub" style="font-size:11.5px">Tap the camera to use your own, or pick a sample. Shown small — interests come first.</div></div></div></div>
+    <div class="field"><label>First name</label><input id="eName" value="${esc(ed.name)}" maxlength="20" placeholder="e.g. Firass"></div>
+    <div class="selrow" style="margin:0 0 14px"><div class="field" style="margin:0"><label>Age</label><input id="eAge" type="number" min="18" max="99" value="${ed.age}"></div>
+      <div class="field" style="margin:0"><label>In Paris as a</label><div class="seg"><button class="${ed.trav?'':'on'}" onclick="eSet('trav',false)">Local</button><button class="${ed.trav?'on':''}" onclick="eSet('trav',true)">Traveler</button></div></div></div>
+    <div class="field"><label>One line about you</label><textarea id="eBio" maxlength="90" placeholder="e.g. Architect. Collects cookbooks she never cooks from.">${esc(ed.bio)}</textarea></div>
+    <div class="field"><label>Languages</label><div class="wrap">${LANGS.map(l=>`<button class="chip ${ed.langs.includes(l)?'on':''}" onclick="eTog('langs','${l}')">${l}</button>`).join('')}</div></div>
+    <div class="field"><label>Interests <span style="font-weight:400;color:var(--ink3)">· used to rank you on shortlists</span></label><div class="wrap">${INTERESTS.map(l=>`<button class="chip ${ed.ints.includes(l)?'on':''}" onclick="eTog('ints','${l}')">${l}</button>`).join('')}</div></div>
+    <div class="field"><label>Dietary needs</label><div class="wrap">${DIETS.map(l=>`<button class="chip ${ed.diet===l?'on':''}" onclick="eSet('diet','${l}')">${l}</button>`).join('')}</div></div>
+    <div style="position:sticky;bottom:-22px;padding:10px 0 4px;background:linear-gradient(transparent,var(--cream) 30%)"><button class="btn pri" style="width:100%" onclick="eSave()">Save profile</button></div>`;
+}
+function eKeep(){const n=$('#eName'),a=$('#eAge'),b=$('#eBio');if(n)ed.name=n.value.trim();if(a)ed.age=Math.max(18,Math.min(99,+a.value||30));if(b)ed.bio=b.value.trim().slice(0,90)}
+function eTog(k,v){eKeep();const i=ed[k].indexOf(v);if(i>=0)ed[k].splice(i,1);else ed[k].push(v);reSheet(editHtml())}
+function eSet(k,v){eKeep();ed[k]=v;reSheet(editHtml())}
+function eSave(){eKeep();if(!ed.name)ed.name='Guest';if(!ed.langs.length)ed.langs=['English'];S.me=Object.assign({},S.me,ed);save();route();openProfile();toast('Profile saved')}
+
+/* ---------- moments ---------- */
+function seedMoments(){
+  if(S.moments)return;
+  S.moments=[{id:'m1',ts:Date.now()-9*DAY,rid:'lune',img:momImg(0),cap:'Brasserie Lune'},{id:'m2',ts:Date.now()-23*DAY,rid:'passage',img:momImg(9),cap:'Passage Secret'},{id:'m3',ts:Date.now()-41*DAY,rid:'cave',img:momImg(5),cap:'Cave Nature'}];
+  save();
+}
+function addMoment(img,rid){
+  const r=rid?R(rid):null;const capIn=$('#mCap');const cap=(capIn&&capIn.value.trim())||(r?r.name:'Dinner');
+  S.moments=S.moments||[];S.moments.unshift({id:'m'+Date.now().toString(36),ts:Date.now(),rid:rid||null,img,cap});save();
+  openProfile();toast('Added to your moments');
+}
+function openAddMoment(){
+  const past=[...new Set(S.history.filter(h=>/^(Hosted|Joined) at /.test(h.txt)).map(h=>h.txt.replace(/^(Hosted|Joined) at /,'')))];
+  openSheet(`<div class="sechead"><h2 class="h" style="font-size:22px">Add a moment</h2><button class="linkbtn" onclick="openProfile()">Cancel</button></div>
+    <div class="field" style="margin-top:14px"><label>Caption</label><input id="mCap" maxlength="40" placeholder="${esc(past[0]||'e.g. Brasserie Lune')}"></div>
+    <label class="btn sec" style="width:100%;display:flex">${ICON_CAM.replace('<svg','<svg width="16" height="16"')} Take or choose a photo<input class="filein" type="file" accept="image/*" capture="environment" onchange="readPhoto(this,720,d=>addMoment(d))"></label>
+    <h3 class="sec">Or pick a sample</h3>
+    <div class="moments">${[1,2,3,6,7,11].map(n=>`<div class="m" onclick="addMoment('${momImg(n)}')"><img src="${momImg(n)}" alt="" loading="lazy" onerror="this.remove()"></div>`).join('')}</div>
+    <p class="sub" style="font-size:11.5px;margin-top:12px">Sample photos are for the demo. In the real app, photos come from your phone after a dinner.</p>`);
+}
+function openMoment(id){
+  const mm=(S.moments||[]).find(x=>x.id===id);if(!mm)return;const r=mm.rid?R(mm.rid):null;
+  openSheet(`<img class="mbig" src="${mm.img}" alt="" onerror="this.style.display='none'">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:14px;gap:10px">
+      <div><h2 class="h" style="font-size:20px;margin:0">${esc(mm.cap)}</h2><div class="sub" style="font-size:13px">${fmtDate(mm.ts)}${r?' · '+esc(r.cuisine)+' · '+r.arr:''}</div></div>
+      <button class="btn ghost sm" onclick="delMoment('${mm.id}')" title="Remove">${ICON_TRASH.replace('<svg','<svg width="16" height="16"')}</button></div>
+    <div class="row" style="margin-top:16px"><button class="btn sec" style="width:100%" onclick="openProfile()">Back to profile</button></div>`);
+}
+function delMoment(id){S.moments=(S.moments||[]).filter(x=>x.id!==id);save();openProfile();toast('Removed')}
+
 /* ---------- onboarding ---------- */
-let draft={name:'',age:30,trav:false,langs:['English','French'],ints:['Food','Travel'],diet:'No restrictions'};
+let draft={name:'',age:30,trav:false,langs:['English','French'],ints:['Food','Travel'],diet:'No restrictions',photo:null,bio:''};
 function showOnb(step){
   if(S.me)draft=Object.assign({},draft,S.me);
   const o=$('#onb');o.classList.remove('hide');
@@ -745,6 +873,9 @@ function showOnb(step){
     ${pg}<button class="btn pri" style="width:100%;flex:none" onclick="showOnb(1)">Find my table</button>
     <p class="sub" style="text-align:center;font-size:11.5px;margin-top:10px">Sample app — fictional people & venues.</p>`}
   if(step===1){o.innerHTML=`<h2 class="h">About <em>you</em></h2><p class="sub" style="margin-bottom:18px">Used to rank you on hosts' shortlists.</p>
+    <div class="field"><label>Photo <span style="font-weight:400;color:var(--ink3)">· optional</span></label><div class="presets">
+      <label class="up">${ICON_CAM}<input class="filein" type="file" accept="image/*" onchange="readPhoto(this,480,d=>{keepOnbVals();draft.photo=d;showOnb(1)})"></label>
+      ${PRESET_AV.slice(0,8).map(n=>`<span class="av ${draft.photo===pav(n)?'on':''}" style="background:#DCCFB8" onclick="keepOnbVals();draft.photo='${pav(n)}';showOnb(1)"><img src="${pav(n)}" alt="" onerror="this.remove()"></span>`).join('')}</div></div>
     <div class="field"><label>First name</label><input id="fName" value="${esc(draft.name)}" placeholder="e.g. Firass" maxlength="20"></div>
     <div class="selrow" style="margin:0 0 14px"><div class="field" style="margin:0"><label>Age</label><input id="fAge" type="number" min="18" max="99" value="${draft.age}"></div>
       <div class="field" style="margin:0"><label>In Paris as a</label><div class="seg"><button class="${draft.trav?'':'on'}" onclick="draft.trav=false;keepOnb(1)">Local</button><button class="${draft.trav?'on':''}" onclick="draft.trav=true;keepOnb(1)">Traveler</button></div></div></div>
@@ -765,13 +896,13 @@ function keepOnbVals(){const n=$('#fName'),a=$('#fAge');if(n)draft.name=n.value.
 function finishOnb(){
   if(!draft.name)draft.name='Guest';
   if(!draft.langs.length)draft.langs=['English'];
-  S.me={...draft,langs:[...draft.langs],ints:[...draft.ints]};S.onboarded=true;seedInvites();save();
+  S.me={...draft,langs:[...draft.langs],ints:[...draft.ints]};S.onboarded=true;seedInvites();seedMoments();save();
   $('#onb').classList.add('hide');route();
   setTimeout(()=>toast(`${(S.invites||[]).filter(i=>i.status==='pending').length} dinner invites are waiting for you`),600);
 }
 
 /* ---------- boot ---------- */
-if(!S.onboarded)showOnb(0);else{seedInvites();resumePending()}
+if(!S.onboarded)showOnb(0);else{seedInvites();seedMoments();resumePending()}
 route();
 setInterval(()=>{if(/^#(host|tables|partner)/.test(location.hash)&&!$('#sheet').classList.contains('on'))rerender()},30000);
 </script>
